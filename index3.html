@@ -1,0 +1,63 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+
+  <title>My Parse App</title>
+  <meta name="description" content="My Parse App">
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.2.18.min.js"></script>
+</head>
+
+<body>
+  
+<form action="#">
+  Applicant Name: <input type="text" id="applicantName"> <br/ >
+
+  <input type="button" id="getImageButton" value="Get Image">
+</form>
+
+<div></div>
+<p id="empty"></p>
+
+
+  <script type="text/javascript">
+    Parse.initialize("Y3hVWxIZt8ONbc5ChxiGERkvUAu40FzN9z8Kuj1j", "i2b1fioEWPxGLmFUlLFl6MGoFVJN9XIOzb4RmOUj");
+
+    var getImageButton = document.getElementById('getImageButton');
+    getImageButton.onclick = handleGetImageButtonClick;
+
+    function handleGetImageButtonClick() {
+      var Content = Parse.Object.extend("JobApplication");
+      var query = new Parse.Query(Content);
+      var applicantName = $('#applicantName').val();
+      query.equalTo("applicantName", applicantName);
+      query.limit(1);
+      query.exists("applicantResumeFile");
+      query.find({
+        success: function(results) {
+          // If the query is successful, store each image URL in an array of image URL's
+          imageURLs = [];
+          for (var i = 0; i < results.length; i++) { 
+            var object = results[i];
+            imageURLs.push(object.get('applicantResumeFile'));
+          }
+          // If the imageURLs array has items in it, set the src of an IMG element to the first URL in the array
+          if(imageURLs.length > 0){
+            // $('#color').attr('src', imageURLs[0]);
+            $("<img />", { src: imageURLs[0]._url}).appendTo($('#empty').empty());
+          }
+        },
+        error: function(error) {
+          // If the query is unsuccessful, report any errors
+          alert("Error: " + error.code + " " + error.message);
+        }
+    });      
+    }
+
+  </script>
+</body>
+
+</html>

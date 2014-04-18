@@ -1,0 +1,6 @@
+.project
+.DS_Store
+webrat.log
+.livereload
+.rvmrc
+.powrc

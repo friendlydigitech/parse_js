@@ -1,0 +1,418 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+
+  <title>Parse App | Query 1</title>
+  <meta name="description" content="AR-Tag It">
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    #map{width:auto;height:385px;background:#f0f0f0;color:#000;}
+  </style>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.2.18.min.js"></script>
+</head>
+
+<body>
+  
+<form action="#">
+  Landmark Name 1: <textarea id="landmarkname1"></textarea> <br/ ><br/ >
+  Landmark Name 2: <textarea id="landmarkname2"></textarea> <br/ ><br/ >
+  Landmark Name Array: <textarea id="landmarknamearray"></textarea> <br/ ><br/ >
+  City: <input type="text" id="city"> <br/ ><br/ >
+  City Code: <input type="text" id="citycode"> <br/ ><br/ >
+  Big Class: <input type="text" id="bigclass"> <br/ ><br/ >
+  Smallclass Number: <input type="text" id="smallclassno"> <br/ ><br/ >
+  Smallclass Name: <input type="text" id="smallclassname"> <br/ ><br/ >
+  Latitude: <input type="text" id="latitude"> <br/ ><br/ >
+  Longitude: <input type="text" id="longitude"> <br/ ><br/ >
+  Distance: <input type="text" id="distance"> <br/ ><br/ >
+
+
+  <br/ ><br/ >Skip number: <input type="text" id="skipnum"> <br/ ><br/ >
+  <input type="button" id="query_by_exist" value="Exist Query">
+  <input type="button" id="query_by_include" value="Include Query"><br/ >
+  <input type="button" id="query_by_landmarknamearray" value="LandmarknameArray Query">
+  <input type="button" id="query_by_coordinate" value="Query Coordinate">
+  <input type="button" id="query_by_landmarkname_coordinate" value="Query Coordinate by Landmarkname"><br/ >
+
+  <input type="button" id="query_by_smallclassno" value="Smallclass Number Query">
+  <input type="button" id="query_by_landmarkname" value="Landmark Name Query">
+</form>
+
+
+<br / ><hr>
+<div id="results"></div>
+<p id="empty"></p>
+
+<script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script type="text/javascript" src="jquery.tinyMap-2.5.7.min.js"></script>
+
+
+  <script type="text/javascript">
+    Parse.initialize("Y3hVWxIZt8ONbc5ChxiGERkvUAu40FzN9z8Kuj1j", "i2b1fioEWPxGLmFUlLFl6MGoFVJN9XIOzb4RmOUj");
+
+    var landmarkname1 = document.getElementById('landmarkname1').value;
+    var landmarkname2 = document.getElementById('landmarkname2').value;
+    var city = document.getElementById('city').value;
+    var citycode = document.getElementById('citycode').value;
+    var bigclass = document.getElementById('bigclass').value;
+    var smallclassno = parseInt(document.getElementById('smallclassno').value);
+    var smallclassname = document.getElementById('smallclassname').value;
+    var latitude = parseFloat(document.getElementById('latitude').value);
+    var longitude = parseFloat(document.getElementById('longitude').value);
+    var skipnum = parseInt(document.getElementById('skipnum').value);
+
+    var area;
+
+
+    var query_by_coordinate_Button = document.getElementById('query_by_coordinate');
+    query_by_coordinate_Button.onclick = handle_query_by_coordinate_ButtonClick;
+
+
+    var query_by_landmarkname_coordinate_Button = document.getElementById('query_by_landmarkname_coordinate');
+    query_by_landmarkname_coordinate_Button.onclick = handle_query_by_landmarkname_coordinate_ButtonClick;
+
+
+    var query_by_landmarknamearray_Button = document.getElementById('query_by_landmarknamearray');
+    query_by_landmarknamearray_Button.onclick = handle_query_by_landmarknamearray_ButtonClick;
+
+
+    var query_by_smallclassno_Button = document.getElementById('query_by_smallclassno');
+    query_by_smallclassno_Button.onclick = handle_query_by_smallclassno_ButtonClick;
+
+    var query_by_landmarkname_Button = document.getElementById('query_by_landmarkname');
+    query_by_landmarkname_Button.onclick = handle_query_by_landmarkname_ButtonClick;
+
+
+    var query_by_exist_Button = document.getElementById('query_by_exist');
+    query_by_exist_Button.onclick = handle_query_by_exist_ButtonClick;
+
+    var query_by_include_Button = document.getElementById('query_by_include');
+    query_by_include_Button.onclick = handle_query_by_include_ButtonClick;
+
+
+    function getAround(longitude, latitude, raidus) {
+      var PI = 3.1415926;
+      var degree = (24901 * 1609) / 360.0;
+      var dpmLat = 1 / degree;
+      var radiusLat = dpmLat * raidus;
+      //最小緯度
+      var minLat = latitude - radiusLat;
+      //最大緯度
+      var maxLat = latitude + radiusLat;
+      var mpdLng = degree * Math.cos(latitude * (PI / 180));
+      var dpmLng = 1 / mpdLng;
+      var radiusLng = dpmLng * raidus;
+      //最小經度
+      var minLng = longitude - radiusLng;
+      //最大經度
+      var maxLng = longitude + radiusLng;
+
+      return [minLng, minLat, maxLng, maxLat];
+    }
+
+    function handle_query_by_landmarkname_coordinate_ButtonClick() {
+      var latitude = parseFloat(document.getElementById('latitude').value);
+      var longitude = parseFloat(document.getElementById('longitude').value);
+      var raidus = parseInt(document.getElementById('distance').value);
+      var landmarkname = document.getElementById('landmarkname1').value;
+
+      var area = getAround(longitude, latitude, raidus);
+      var minLng = area[0];
+      var minLat = area[1];
+      var maxLng = area[2];
+      var maxLat = area[3];
+    
+      var Landmark = Parse.Object.extend("Landmark");
+      var query = new Parse.Query(Landmark);
+      query.contains("landmarkname", landmarkname);
+      query.greaterThan("latitude", minLat);
+      query.lessThan("latitude", maxLat);
+      query.greaterThan("longitude", minLng);
+      query.lessThan("longitude", maxLng);
+
+      query.limit(1000);
+      query.find({
+        success: function(results) {
+
+          $( "#results" ).text("Successfully retrieved " + results.length + " landmarks.");
+          // Do something with the returned Parse.Object values
+          $( "p" ).empty();
+          for (var i = 0; i < results.length; i++) {
+            var object = results[i];
+            $( "p" ).append(object.id + ' - ' + 
+                            object.get('landmarkname') + ' - ' +
+                            object.get('latitude') + ' - ' + 
+                            object.get('longitude') + ' - ' +  
+                            object.createdAt + ' <br /> ');
+          }
+        },
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+      });
+    }
+
+    function handle_query_by_coordinate_ButtonClick() {
+      var latitude = parseFloat(document.getElementById('latitude').value);
+      var longitude = parseFloat(document.getElementById('longitude').value);
+      var raidus = parseInt(document.getElementById('distance').value);
+
+      area = getAround(longitude, latitude, raidus);
+      var minLng = area[0];
+      var minLat = area[1];
+      var maxLng = area[2];
+      var maxLat = area[3];
+    
+      var Landmark = Parse.Object.extend("Landmark");
+      var query = new Parse.Query(Landmark);
+      query.greaterThan("latitude", minLat);
+      query.lessThan("latitude", maxLat);
+      query.greaterThan("longitude", minLng);
+      query.lessThan("longitude", maxLng);
+
+      query.limit(1000);
+      query.find({
+        success: function(results) {
+
+          $( "#results" ).text("Successfully retrieved " + results.length + " landmarks.");
+          // Do something with the returned Parse.Object values
+          $( "p" ).empty();
+          for (var i = 0; i < results.length; i++) {
+            var object = results[i];
+            $( "p" ).append(object.id + ' - ' + 
+                            object.get('landmarkname') + ' - ' +
+                            object.get('latitude') + ' - ' + 
+                            object.get('longitude') + ' - ' +  
+                            object.createdAt + ' <br /> ');
+          }
+
+
+          $(function () {
+              $( "#map" ).empty();
+              $('#map').tinyMap({
+                center: {
+                    x: latitude,
+                    y: longitude
+                },
+
+                polygon: {
+                    coords: [
+                        [minLat, minLng],
+                        [minLat, maxLng],
+                        [maxLat, maxLng],
+                        [maxLat, minLng]
+                    ],
+                    color: '#000033',
+                    fillcolor: '#0000cc',
+                    width: 1,
+                    // click: function (e) {
+                    //     alert('You clicked at: ' + e.latLng.ab + ', ' + e.latLng.cb);
+                    // }
+                },
+
+                zoom: 16,
+                marker: [
+                  {addr: [latitude, longitude], text: 'center'}
+                ]
+
+              });
+          }); 
+
+        },
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+      });
+
+
+      // $( "p" ).empty();
+      // $( "p" ).append("minLng: " + minLng + " minLat: " + minLat + "<br />" +
+      //                 "maxLng: " + maxLng + " maxLat: " + maxLat       );
+    }
+
+    function handle_query_by_landmarknamearray_ButtonClick() {
+      var landmarknamearray = document.getElementById('landmarknamearray').value;
+      landmarknamearray = landmarknamearray.split(" ");
+      var Landmark = Parse.Object.extend("Landmark");
+      var query = new Parse.Query(Landmark);
+      query.containedIn("landmarkname", landmarknamearray);
+      query.limit(1000);
+      if (skipnum != null) { query.skip(skipnum); }
+      query.find({
+        success: function(results) {
+          $( "#results" ).text("Successfully retrieved " + results.length + " landmarks.");
+          // Do something with the returned Parse.Object values
+          $( "p" ).empty();
+          for (var i = 0; i < results.length; i++) {
+            var object = results[i];
+            $( "p" ).append(object.id + ' - ' + 
+                            object.get('smallclassno') + ' - ' + 
+                            object.get('landmarkname') + ' - ' +
+                            object.get('latitude') + ' - ' + 
+                            object.get('longitude') + ' - ' +  
+                            object.createdAt + ' <br /> ');
+          }
+        },
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+      });
+    }
+
+
+    function handle_query_by_include_ButtonClick() {
+      var Message = Parse.Object.extend("Message");
+      var query = new Parse.Query(Message);
+      query.descending("createdAt");
+ 
+      // Only retrieve the last ten
+      query.limit(10);
+ 
+      // Include the post data with each comment
+      query.include("parent");
+      query.find({
+        success: function(comments) {
+          $( "#results" ).text("Successfully retrieved " + comments.length + " testobjects.");
+          // Do something with the returned Parse.Object values
+          $( "p" ).empty();
+          for (var i = 0; i < comments.length; i++) {
+            var theme = comments[i].get('parent');
+            $( "p" ).append(theme.id + ' - ' + 
+                            theme.get('bundleurl') + ' - ' + 
+                            theme.get('type') + ' - ' + 
+                            theme.createdAt + ' <br /> ');
+          }
+        },
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+      });
+    }
+
+
+    function handle_query_by_exist_ButtonClick() {
+      var TestObject = Parse.Object.extend("TestObject");
+      var query = new Parse.Query(TestObject);
+      query.exists("barcol");
+      query.find({
+        success: function(results) {
+          $( "#results" ).text("Successfully retrieved " + results.length + " testobjects.");
+          // Do something with the returned Parse.Object values
+          $( "p" ).empty();
+          for (var i = 0; i < results.length; i++) {
+            var object = results[i];
+            $( "p" ).append(object.id + ' - ' + 
+                            object.get('foo') + ' - ' + 
+                            object.get('barcol') + ' - ' + 
+                            object.createdAt + ' <br /> ');
+          }
+        },
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+      });
+    }
+
+
+
+    function handle_query_by_smallclassno_ButtonClick() {
+      var smallclassno = parseInt(document.getElementById('smallclassno').value);
+
+      var Landmark = Parse.Object.extend("Landmark");
+      var query = new Parse.Query(Landmark);
+      query.equalTo("smallclassno", smallclassno);
+      query.limit(1000);
+      if (skipnum != null) { query.skip(skipnum); }
+      query.find({
+        success: function(results) {
+          $( "#results" ).text("Successfully retrieved " + results.length + " landmarks.");
+          // Do something with the returned Parse.Object values
+          $( "p" ).empty();
+          for (var i = 0; i < results.length; i++) {
+            var object = results[i];
+            $( "p" ).append(object.id + ' - ' + 
+                            object.get('smallclassno') + ' - ' + 
+                            object.get('landmarkname') + ' - ' + 
+                            object.createdAt + ' <br /> ');
+          }
+        },
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+      });
+    }
+
+    function handle_query_by_landmarkname_ButtonClick() {
+      var landmarkname1 = document.getElementById('landmarkname1').value;
+      var smallclassno = parseInt(document.getElementById('smallclassno').value);
+
+      var Landmark = Parse.Object.extend("Landmark");
+      // console.log(landmarkname1.split(" "));
+      // landmarkname = landmarkname.split(" ");
+      var query = new Parse.Query(Landmark);
+      // query.equalTo("landmarkname", landmarkname);
+      query.contains("landmarkname", landmarkname1);
+      // query.equalTo("smallclassno", smallclassno);
+      // query.containsAll("landmarkname", landmarkname);
+      query.limit(1000);
+      query.ascending("citycode");
+      query.find({
+        success: function(results) {
+          $( "#results" ).text("Successfully retrieved " + results.length + " landmarks.");
+          // Do something with the returned Parse.Object values
+          $( "p" ).empty();
+          for (var i = 0; i < results.length; i++) {
+            var object = results[i];
+            $( "p" ).append(object.id + ' - ' + 
+                            object.get('citycode') + ' - ' +
+                            object.get('landmarkname') + ' - ' +
+                            object.get('latitude') + ' - ' + 
+                            object.get('longitude') + ' - ' +  
+                            object.createdAt + ' <br /> ');
+          }
+        },
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+      });
+    }
+
+
+
+    // $(function () {
+    //     $('#map').tinyMap({
+    //       center: {
+    //           x: latitude,
+    //           y: longitude
+    //       },
+
+    //       polygon: {
+    //           coords: [
+    //               [22.998202952055586, 120.19804775832257],
+    //               [22.998202952055586, 120.20195224167743],
+    //               [23.001797047944414, 120.20195224167743],
+    //               [23.001797047944414, 120.19804775832257]
+    //           ],
+    //           color: '#000033',
+    //           fillcolor: '#0000cc',
+    //           width: 1,
+    //           // click: function (e) {
+    //           //     alert('You clicked at: ' + e.latLng.ab + ', ' + e.latLng.cb);
+    //           // }
+    //       },
+
+    //       zoom: 16,
+    //       marker: [
+    //         {addr: [latitude, longitude], text: 'center'}
+    //       ]
+
+    //     });
+    // }); 
+  </script>
+  <div id="map"></div>
+</body>
+
+</html>

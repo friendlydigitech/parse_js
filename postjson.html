@@ -1,0 +1,55 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+
+  <title>Post Json</title>
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.2.18.min.js"></script>
+</head>
+
+<body>
+
+
+<form action="#">
+  <input type="button" id="getpostButton" value="Get Post">
+</form>
+
+<br / ><hr>
+<div></div>
+<p id="empty"></p>
+
+
+  <script type="text/javascript">
+    Parse.initialize("Y3hVWxIZt8ONbc5ChxiGERkvUAu40FzN9z8Kuj1j", "i2b1fioEWPxGLmFUlLFl6MGoFVJN9XIOzb4RmOUj");
+
+    var getpostButton = document.getElementById('getpostButton');
+    getpostButton.onclick = handlegetpostButtonClick;
+
+    function handlegetpostButtonClick() {
+      xmlhttp = new XMLHttpRequest();
+      var url = "https://api.parse.com/1/classes/Message";
+      xmlhttp.open("POST", url, true);
+      xmlhttp.setRequestHeader("Content-type", "application/json");
+      xmlhttp.setRequestHeader("X-Parse-Application-Id", "Y3hVWxIZt8ONbc5ChxiGERkvUAu40FzN9z8Kuj1j");
+      xmlhttp.setRequestHeader("X-Parse-REST-API-Key", "VvqQCT5nNjzYR3IBnmJvUyMNr2G3aDIpTcWBJv3g");
+      xmlhttp.onreadystatechange = function () { //Call a function when the state changes.
+          if (xmlhttp.readyState == 4 && xmlhttp.status == 201) {
+              $( "div" ).text( xmlhttp.responseText);
+          }
+      }
+      
+      var parameters = JSON.stringify({
+          "imageurl":"http://files.parse.com/b97cadbd-3892-4a73-8985-71217109ac9e/cb67a02c-c718-48ee-a0e0-0836b274984d-photo.jpg",
+          "parent": { "__type": "Pointer", "className": "Theme" , "objectId": "EvVfi3edGI"},
+          "textcontent":"Just a test!...許功蓋測試2"
+      });
+      // Neither was accepted when I set with parameters="username=myname"+"&password=mypass" as the server may not accept that
+      xmlhttp.send(parameters);    
+
+    }
+  </script>
+</body>
+
+</html>

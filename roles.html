@@ -1,0 +1,347 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+
+  <title>Relation & Roles</title>
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.2.18.min.js"></script>
+</head>
+
+<body>
+
+<form action="#">
+  Post Content: <input type="text" id="postcontent"> <br/ ><br/ >
+
+  <input type="button" id="createpostButton" value="Create Post">
+</form>
+
+<br / ><hr>
+<div id="createpostresults"></div>
+<p id="empty"></p>
+<hr><br / >
+
+
+<form action="#">
+  User Name: <input type="text" id="login_username"> <br/ ><br/ >
+  Password: <input type="password" id="login_password"> <br/ ><br/ >
+
+  User Object ID: <input type="text" id="user_object_id"> <br/ ><br/ >
+  Liked Post ID: <input type="text" id="post_id"> <br/ ><br/ >
+
+  Role Name: <input type="text" id="role_name"> <br/ ><br/ >
+  Parent Role Name: <input type="text" id="parent_role_name"> <br/ ><br/ >
+
+  <input type="button" id="loginButton" value="Login">
+  <input type="button" id="logoutButton" value="Logout">
+  <input type="button" id="likepostButton" value="Like Post"><br/ >
+  <input type="button" id="createroleButton" value="Create Role">
+  <input type="button" id="createbasicroleButton" value="Create Basic Role">
+  <input type="button" id="addusertoroleButton" value="Add User to Role">
+  <input type="button" id="checkhasroleButton" value="Check User Has Role">
+  <input type="button" id="addchildtoparentroleButton" value="Add Child to Parent Role">
+</form>
+<br / ><hr>
+<div id="loginresults"></div>
+<p id="empty"></p>
+
+
+
+
+  <script type="text/javascript">
+    Parse.initialize("Y3hVWxIZt8ONbc5ChxiGERkvUAu40FzN9z8Kuj1j", "i2b1fioEWPxGLmFUlLFl6MGoFVJN9XIOzb4RmOUj");
+
+    var createpostButton = document.getElementById('createpostButton');
+    createpostButton.onclick = handlecreatepostButtonClick;
+
+    var loginButton = document.getElementById('loginButton');
+    loginButton.onclick = handleloginButtonClick;
+
+    var logoutButton = document.getElementById('logoutButton');
+    logoutButton.onclick = handlelogoutButtonClick;
+
+    var likepostButton = document.getElementById('likepostButton');
+    likepostButton.onclick = handlelikepostButtonClick;
+
+    var createroleButton = document.getElementById('createroleButton');
+    createroleButton.onclick = handlelcreateroleButtonClick;
+
+    var createbasicroleButton = document.getElementById('createbasicroleButton');
+    createbasicroleButton.onclick = handlelcreatebasicroleButtonClick;
+
+    var addusertoroleButton = document.getElementById('addusertoroleButton');
+    addusertoroleButton.onclick = handleaddusertoroleButtonClick;
+
+    var checkhasroleButton = document.getElementById('checkhasroleButton');
+    checkhasroleButton.onclick = handlecheckhasroleButtonClick;
+
+    var addchildtoparentroleButton = document.getElementById('addchildtoparentroleButton');
+    addchildtoparentroleButton.onclick = handleaddchildtoparentroleButtonClick;
+
+
+
+
+
+    // create a hierarchy role
+    function handlelcreateroleButtonClick() {
+      var role_name = document.getElementById('role_name').value;
+
+      // By specifying no write privileges for the ACL, we can ensure the role cannot be altered.
+      var roleACL = new Parse.ACL();
+      roleACL.setPublicReadAccess(true);
+
+      var role = new Parse.Role(role_name, roleACL);
+
+      // usersToAddToRole = [];
+      rolesToAddToRole = [];
+
+      // for (var i = 0; i < usersToAddToRole.length; i++) {
+      //   role.getUsers().add(usersToAddToRole[i]);
+      // }
+      for (var i = 0; i < rolesToAddToRole.length; i++) {
+        role.getRoles().add(rolesToAddToRole[i]);
+      }
+
+      role.save(null,
+      {
+        success: function(role) {
+          $( "#loginresults" ).empty();
+          $( "#loginresults" ).append("Role : " + role.getName() + " has created!");
+        }
+      });
+    }
+
+ 
+    // add users to Role
+    function handleaddusertoroleButtonClick() {
+      var role_name = document.getElementById('role_name').value;
+      var user_object_id = document.getElementById('user_object_id').value;
+
+      var Role = Parse.Object.extend("_Role"); 
+      var query = new Parse.Query(Role); 
+      query.equalTo("name", role_name); 
+      query.first().then(function(queriedRole) {
+        if (queriedRole) {
+            console.log(queriedRole.getName() + "  is found.");
+            var user_query = new Parse.Query(Parse.User);
+            user_query.get(user_object_id, {
+              success: function(user) {
+                console.log(user.getUsername() + "  is found.");
+                // usersToAddToRole = [];
+                // usersToAddToRole.push(user);
+                usersToAddToRole = [user];
+                for (var i = 0; i < usersToAddToRole.length; i++) {
+                  queriedRole.getUsers().add(usersToAddToRole[i]);
+                }
+                queriedRole.save();
+              }  
+            });
+        } else {
+            console.log("Role not found!");
+        }
+      });
+    }
+
+    // add child role to parent
+    function handleaddchildtoparentroleButtonClick() {
+      var child_role = document.getElementById('role_name').value;
+      var parent_role = document.getElementById('parent_role_name').value;
+      
+
+
+      var Role = Parse.Object.extend("_Role"); 
+      var query = new Parse.Query(Role); 
+      query.equalTo("name", parent_role); 
+      query.first().then(function(queriedRole) {
+          if (queriedRole) {
+              console.log(queriedRole.getName() + "  is found.");
+              var child_query = new Parse.Query(Role); 
+              child_query.equalTo("name", child_role);
+              child_query.first().then(function(queried_child_Role) {
+                if (queried_child_Role) {
+                  console.log(queried_child_Role.getName() + "  is found.");
+                  // usersToAddToRole = [];
+                  // usersToAddToRole.push(user);
+                  rolesToAddToRole = [queried_child_Role];
+                  for (var i = 0; i < rolesToAddToRole.length; i++) {
+                    queriedRole.getRoles().add(rolesToAddToRole[i]);
+                  }
+                  queriedRole.save();
+                }  
+              });
+
+          } else {
+              console.log("Role not found!");
+          }
+      });
+    }
+
+    // check if a user has a specific role
+    function handlecheckhasroleButtonClick() {
+      var role_name = document.getElementById('role_name').value;
+      var user_object_id = document.getElementById('user_object_id').value;
+
+      var user_query = new Parse.Query(Parse.User);
+      user_query.get(user_object_id, {
+        success: function(user) {
+          var query = (new Parse.Query(Parse.Role));
+          query.equalTo("name", role_name);
+          query.equalTo("users", user);
+          query.first().then(function(queriedRole) {
+              if (queriedRole) {
+                  $( "#loginresults" ).empty();
+                  $( "#loginresults" ).append("user is in :" + queriedRole.getName());
+              } else {
+                  $( "#loginresults" ).empty();
+                  $( "#loginresults" ).append("user is not in :" + role_name);
+              }
+          });
+        }  
+      });  
+    }
+
+
+
+    function handlecreatepostButtonClick() {
+      var content = document.getElementById('postcontent').value;
+
+      var Post = Parse.Object.extend("Post");
+      var newPost = new Post();
+
+      newPost.save({
+        content: content
+      }, {
+        success: function(newPost) {
+          // The object was saved successfully.
+          $( "#createpostresults" ).empty();
+          $( "#createpostresults" ).append("New Post Saved!<br />");
+          $( "#createpostresults" ).append(newPost.id + ' - ' + 
+                                           newPost.get("content") + ' - ' +
+                                           newPost.createdAt + ' <br /> ');
+        },
+        error: function(newPost, error) {
+          $( "#createpostresults" ).append("Error: " + error.code + " " + error.message);
+          // The save failed.
+          // error is a Parse.Error with an error code and description.
+        }
+      });
+    }
+
+
+    function handlelikepostButtonClick() {
+      var post_id = document.getElementById('post_id').value;
+
+      var Post = Parse.Object.extend("Post");
+      var query = new Parse.Query(Post);
+        query.get(post_id, {
+          success: function(post) {
+            // The object was retrieved successfully.
+            var user = Parse.User.current();
+            var relation = user.relation("likes");
+            // relation.add(post);
+            // user.save();
+
+            relation.query().find({
+              success: function(lists) {
+                // list contains the posts that the current user likes.
+                $( "#loginresults" ).append('<br /><br />');
+                for (var i = 0; i < lists.length; i++) {
+                  var object = lists[i];
+                  $( "#loginresults" ).append(object.id + ' - ' + 
+                                  object.get('content') + ' - ' +
+                                  object.createdAt + ' <br /> ');
+                }
+              }
+            });
+          },
+          error: function(object, error) {
+            // The object was not retrieved successfully.
+            // error is a Parse.Error with an error code and description.
+            $( "#createpostresults" ).append("Error: " + error.code + " " + error.message);
+          }
+        });
+      
+    }
+
+
+
+    function handlelcreatebasicroleButtonClick() {
+      var role_name = document.getElementById('role_name').value;
+
+      // By specifying no write privileges for the ACL, we can ensure the role cannot be altered.
+      var roleACL = new Parse.ACL();
+      roleACL.setPublicReadAccess(true);
+
+      var role = new Parse.Role(role_name, roleACL);
+
+      var currentUser = Parse.User.current();
+      usersToAddToRole = [currentUser];
+      // usersToAddToRole = ['gp5hobHPu4', 'yL4K2LFL93', 'QhTOeT6a2Q', 'ZZxgW7o61a'];
+      rolesToAddToRole = [];
+
+      for (var i = 0; i < usersToAddToRole.length; i++) {
+        role.getUsers().add(usersToAddToRole[i]);
+      }
+      // for (var i = 0; i < rolesToAddToRole.length; i++) {
+      //   role.getRoles().add(rolesToAddToRole[i]);
+      // }
+
+      role.save();
+    }
+
+
+
+    function handleloginButtonClick() {
+      var username = document.getElementById('login_username').value;
+      var password = document.getElementById('login_password').value;
+ 
+      Parse.User.logIn(username, password, {
+        success: function(user) {
+          // Do stuff after successful login.
+          $( "#loginresults" ).empty();
+          $( "#loginresults" ).append("User Logined!<br />");
+          $( "#loginresults" ).append(user.id + ' - ' + 
+                            user.getUsername() + ' - ' +
+                            user.getEmail() + ' - ' + 
+                            user.get("phone") + ' - ' +  
+                            user.createdAt + ' <br /> ');
+
+        },
+        error: function(user, error) {
+          // The login failed. Check error to see why.
+          $( "#loginresults" ).empty();
+          $( "#loginresults" ).append("Error: " + error.code + " " + error.message);
+        }
+      });
+
+    }
+
+    function handlelogoutButtonClick() {
+      var oldcurrentUser = Parse.User.current();
+      Parse.User.logOut();
+      if ( Parse.User.current() == null) {
+        $( "#loginresults" ).empty();
+        $( "#loginresults" ).append("User " +  oldcurrentUser.getUsername()  +  " has Logout!<br />");
+      }
+
+    }
+
+    var currentUser = Parse.User.current();
+    if (currentUser) {
+      // do stuff with the user
+      $( "#loginresults" ).empty();
+          $( "#loginresults" ).append("User has Logined!<br />");
+          $( "#loginresults" ).append(currentUser.id + ' - ' + 
+                            currentUser.getUsername() + ' - ' +
+                            currentUser.getEmail() + ' - ' + 
+                            currentUser.get("phone") + ' - ' +  
+                            currentUser.createdAt + ' <br /> ');
+    } else {
+        // show the signup or login page
+    }
+
+  </script>
+</body>
+
+</html>

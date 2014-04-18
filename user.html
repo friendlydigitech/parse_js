@@ -1,0 +1,341 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+
+  <title>User function</title>
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.2.18.min.js"></script>
+</head>
+
+<body>
+
+
+<form action="#">
+  User Name: <input type="text" id="username"> <br/ ><br/ >
+  Password: <input type="password" id="password"> <br/ ><br/ >
+  Email: <input type="text" id="email"> <br/ ><br/ >
+  Phone: <input type="text" id="phone"> <br/ ><br/ >
+
+  <input type="button" id="signupButton" value="Sign Up">
+</form>
+
+<br / ><hr>
+<div id="signupresults"></div>
+<p id="empty"></p>
+<hr><br / >
+
+<form action="#">
+  User Name: <input type="text" id="login_username"> <br/ ><br/ >
+  Password: <input type="password" id="login_password"> <br/ ><br/ >
+  New Email: <input type="text" id="newemail"> <br/ ><br/ ><br/ >
+
+  User Object ID: <input type="text" id="user_object_id"> <br/ ><br/ >
+  User Message Content: <input type="text" id="message_content"> <br/ ><br/ >
+  Phone: <input type="text" id="phone"> <br/ ><br/ >
+
+  <input type="button" id="loginButton" value="Login">
+  <input type="button" id="logoutButton" value="Logout">
+  <input type="button" id="updateemailButton" value="Update email"><br/ >
+  <input type="button" id="userauthenticateButton" value="User Object authenticating">
+  <input type="button" id="addusermessageButton" value="Add User Message">
+  <input type="button" id="addgroupmessageButton" value="Add Group Message">
+  <input type="button" id="addpublicmessageButton" value="Add Public Message">
+  <input type="button" id="requestPasswordResetButton" value="Password Reset">
+  <input type="button" id="queryuserButton" value="Query User">
+</form>
+<br / ><hr>
+<div id="loginresults"></div>
+<p id="empty"></p>
+
+<form action="#">
+  User ID: <input type="text" id="inputuserid"> <br/ ><br/ >
+  Message : <input type="text" id="inputmessage"> <br/ ><br/ >
+
+  <input type="button" id="signupButton" value="Sign Up">
+</form>
+
+<br / ><hr>
+<div id="signupresults"></div>
+<p id="empty"></p>
+<hr><br / >
+
+
+
+  <script type="text/javascript">
+    Parse.initialize("Y3hVWxIZt8ONbc5ChxiGERkvUAu40FzN9z8Kuj1j", "i2b1fioEWPxGLmFUlLFl6MGoFVJN9XIOzb4RmOUj");
+
+    var signupButton = document.getElementById('signupButton');
+    signupButton.onclick = handlesignupButtonClick;
+
+    var loginButton = document.getElementById('loginButton');
+    loginButton.onclick = handleloginButtonClick;
+
+    var logoutButton = document.getElementById('logoutButton');
+    logoutButton.onclick = handlelogoutButtonClick;
+
+    var updateemailButton = document.getElementById('updateemailButton');
+    updateemailButton.onclick = handleupdateemailButtonClick;
+
+    var userauthenticateButton = document.getElementById('userauthenticateButton');
+    userauthenticateButton.onclick = handleuserauthenticateButtonClick;
+
+    var addusermessageButton = document.getElementById('addusermessageButton');
+    addusermessageButton.onclick = handleaddusermessageButtonClick;
+
+    var addgroupmessageButton = document.getElementById('addgroupmessageButton');
+    addgroupmessageButton.onclick = handleaddgroupmessageButtonClick;
+
+    var addpublicmessageButton = document.getElementById('addpublicmessageButton');
+    addpublicmessageButton.onclick = handleaddpublicmessageButtonClick;
+
+    var requestPasswordResetButton = document.getElementById('requestPasswordResetButton');
+    requestPasswordResetButton.onclick = handlerequestPasswordResetButtonClick;
+
+    var queryuserButton = document.getElementById('queryuserButton');
+    queryuserButton.onclick = handlequeryuserButtonClick;
+
+
+    function handlequeryuserButtonClick() {
+      var phone = document.getElementById('phone').value;
+
+      var query = new Parse.Query(Parse.User);
+      query.equalTo("phone", phone);  // find all the user
+      query.find({
+        success: function(users) {
+          console.log("here!");
+          // Do stuff
+          $( "#loginresults" ).empty();
+          for (var i = 0; i < users.length; i++) {
+            var object = users[i];
+            $( "#loginresults" ).append(object.id + ' - ' + 
+                            object.get('username') + ' - ' +
+                            object.get('email') + ' - ' + 
+                            object.get('phone') + ' - ' +  
+                            object.createdAt + ' <br /> ');
+          }
+        }
+      });
+    }
+
+    function handlerequestPasswordResetButtonClick() {
+      var email = document.getElementById('newemail').value;
+
+      Parse.User.requestPasswordReset(email, {
+        success: function() {
+          // Password reset request was sent successfully
+          $( "#loginresults" ).empty();
+          $( "#loginresults" ).append("Public Message Seted!<br />");
+        },
+        error: function(error) {
+          // Show the error message somewhere
+          $( "#loginresults" ).empty();
+          $( "#loginresults" ).append("Error: " + error.code + " " + error.message);
+        }
+      });
+    }
+
+    function handleaddpublicmessageButtonClick() {
+      var public_message_content = document.getElementById('message_content').value;
+
+      var Message = Parse.Object.extend("Message");
+      var publicMessage = new Message();
+      var meaasgeACL = new Parse.ACL(Parse.User.current());
+      meaasgeACL.setPublicReadAccess(true);
+      publicMessage.setACL(meaasgeACL);
+      publicMessage.save();
+
+      $( "#loginresults" ).empty();
+      $( "#loginresults" ).append("Public Message Seted!<br />");
+    }
+
+
+    function handleaddgroupmessageButtonClick() {
+      var group_message_content = document.getElementById('message_content').value;
+
+      var Message = Parse.Object.extend("Message");
+      var groupMessage = new Message();
+      var groupACL = new Parse.ACL();
+
+      var userList = ["QhTOeT6a2Q", "ZZxgW7o61a", "m5ys3L7DcK", "hasRzgAU7X"];
+       
+      // userList is an array with the users we are sending this message to.
+      for (var i = 0; i < userList.length; i++) {
+        groupACL.setReadAccess(userList[i], true);
+        groupACL.setWriteAccess(userList[i], true);
+      }
+       
+      groupMessage.setACL(groupACL);
+      groupMessage.set("textcontent", group_message_content);
+      groupMessage.save();
+      $( "#loginresults" ).empty();
+      $( "#loginresults" ).append("Group Message Seted!<br />");
+    }
+
+    function handleaddusermessageButtonClick() {
+      var user_message_content = document.getElementById('message_content').value;
+
+      var Message = Parse.Object.extend("Message");
+      var privateMessage = new Message();
+      privateMessage.set("textcontent", user_message_content);
+      privateMessage.setACL(new Parse.ACL(Parse.User.current()));
+      privateMessage.save();
+      $( "#loginresults" ).empty();
+      $( "#loginresults" ).append("User Message Saved!<br />");
+    }
+
+    function handleuserauthenticateButtonClick() {
+      var user_object_id = document.getElementById('user_object_id').value;
+      var query = new Parse.Query(Parse.User);
+        query.get(user_object_id, {
+          success: function(userAgain) {
+            if (userAgain.authenticated()) {
+              $( "#loginresults" ).empty();
+              $( "#loginresults" ).append("User Authenticated!<br />");
+            }
+            else {
+              $( "#loginresults" ).empty();
+              $( "#loginresults" ).append("User Not Authenticated!<br />");
+            }
+
+          }
+        });
+    }
+
+
+    function handleupdateemailButtonClick() {
+      var username = document.getElementById('login_username').value;
+      var password = document.getElementById('login_password').value;
+      var newemail = document.getElementById('newemail').value;
+
+      var currentUser = Parse.User.current();
+
+      var user = currentUser;
+        
+          user.set("email", newemail);  // attempt to change username
+          user.save(null, {
+            success: function(user) {
+              // This succeeds, since the user was authenticated on the device
+              $( "#loginresults" ).empty();
+              $( "#loginresults" ).append("User Updated!<br />");
+              $( "#loginresults" ).append(user.id + ' - ' + 
+                                user.getUsername() + ' - ' +
+                                user.getEmail() + ' - ' + 
+                                user.get("phone") + ' - ' +  
+                                user.createdAt + ' <br /> ');
+            }
+          });
+
+      
+    }
+
+
+    function handlesignupButtonClick() {
+      var username = document.getElementById('username').value;
+      var password = document.getElementById('password').value;
+      var email = document.getElementById('email').value;
+      var phone = document.getElementById('phone').value;
+
+if (username == "") { alert("Username is empty!"); }
+alert("Length of username is :" + username.length);
+alert("Length of password is :" + password.length);      
+
+      var user = new Parse.User();
+      user.set("username", username);
+      user.set("password", password);
+      user.set("email", email);
+       
+      // other fields can be set just like with Parse.Object
+      user.set("phone", phone);
+       
+      user.signUp(null, {
+        success: function(user) {
+          // Hooray! Let them use the app now.
+          $( "#signupresults" ).empty();
+          $( "#signupresults" ).append("User Created!<br />");
+          $( "#signupresults" ).append(user.id + ' - ' + 
+                            user.getUsername() + ' - ' +
+                            user.getEmail() + ' - ' + 
+                            user.get("phone") + ' - ' +  
+                            user.createdAt + ' <br /> ');
+        },
+        error: function(user, error) {
+          // Show the error message somewhere and let the user try again.
+          // alert("Error: " + error.code + " " + error.message);
+          if (error.code === Parse.Error.EMAIL_TAKEN) {
+            alert("Email Duplicated Error: " + error.code + " " + error.message);
+          // } else if (error.code === Parse.Error.INVALID_EMAIL_ADDRESS) {
+          } else if (error.code === Parse.Error.EMAIL_MISSING) {
+            alert("Email Empty Error: " + error.code + " " + error.message);
+          } else if (error.code === Parse.Error.USERNAME_MISSING) {
+            alert("Username Empty Error: " + error.code + " " + error.message);
+          } else if (error.code === Parse.Error.USERNAME_TAKEN) {
+            alert("User Duplicated Error: " + error.code + " " + error.message);
+          } else if (error.code === Parse.Error.PASSWORD_MISSING) {
+            alert("Password Empty Error: " + error.code + " " + error.message);
+          } else if (error.code === Parse.Error.CONNECTION_FAILED) {
+            alert("Uh oh, we couldn't even connect to the Parse Cloud!");
+          } else {
+            alert("Error: " + error.code + " " + error.message);
+          }
+
+        }
+      });
+
+    }
+
+
+    function handleloginButtonClick() {
+      var username = document.getElementById('login_username').value;
+      var password = document.getElementById('login_password').value;
+ 
+      Parse.User.logIn(username, password, {
+        success: function(user) {
+          // Do stuff after successful login.
+          $( "#loginresults" ).empty();
+          $( "#loginresults" ).append("User Logined!<br />");
+          $( "#loginresults" ).append(user.id + ' - ' + 
+                            user.getUsername() + ' - ' +
+                            user.getEmail() + ' - ' + 
+                            user.get("phone") + ' - ' +  
+                            user.createdAt + ' <br /> ');
+
+        },
+        error: function(user, error) {
+          // The login failed. Check error to see why.
+          $( "#loginresults" ).empty();
+          $( "#loginresults" ).append("Error: " + error.code + " " + error.message);
+        }
+      });
+
+    }
+
+    function handlelogoutButtonClick() {
+      var oldcurrentUser = Parse.User.current();
+      Parse.User.logOut();
+      if ( Parse.User.current() == null) {
+        $( "#loginresults" ).empty();
+        $( "#loginresults" ).append("User " +  oldcurrentUser.getUsername()  +  " has Logout!<br />");
+      }
+
+    }
+
+    var currentUser = Parse.User.current();
+    if (currentUser) {
+      // do stuff with the user
+      $( "#loginresults" ).empty();
+          $( "#loginresults" ).append("User has Logined!<br />");
+          $( "#loginresults" ).append(currentUser.id + ' - ' + 
+                            currentUser.getUsername() + ' - ' +
+                            currentUser.getEmail() + ' - ' + 
+                            currentUser.get("phone") + ' - ' +  
+                            currentUser.createdAt + ' <br /> ');
+    } else {
+        // show the signup or login page
+    }
+
+  </script>
+</body>
+
+</html>

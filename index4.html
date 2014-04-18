@@ -1,0 +1,181 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+
+  <title>Parse App | AR-Tag It</title>
+  <meta name="description" content="AR-Tag It">
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.2.18.min.js"></script>
+</head>
+
+<body>
+  
+<form action="#">
+  Text Message: <textarea id="textmessage"></textarea> <br/ ><br/ >
+  Voice File: <input type="file" id="voicemessage"> <br/ ><br/ >
+  Image File: <input type="file" id="imagefile"> <br/ ><br/ >
+  <input type="button" id="tagit" value="Tag It">
+  <input type="button" id="createobject" value="Create Object">
+  <input type="button" id="createtheme" value="Create Theme">
+  <input type="button" id="querymessage" value="Query Message">
+  <input type="button" id="retrieveobject" value="Retrieve Object">
+</form>
+
+
+<br / ><hr>
+<div></div>
+<p id="empty"></p>
+
+
+  <script type="text/javascript">
+    Parse.initialize("Y3hVWxIZt8ONbc5ChxiGERkvUAu40FzN9z8Kuj1j", "i2b1fioEWPxGLmFUlLFl6MGoFVJN9XIOzb4RmOUj");
+
+    var createobjectButton = document.getElementById('createobject');
+    createobjectButton.onclick = handlecreateobjectButtonClick;
+
+
+    var retrieveobjectButton = document.getElementById('retrieveobject');
+    retrieveobjectButton.onclick = handleretrieveobjectButtonClick;
+
+    var tagitButton = document.getElementById('tagit');
+    tagitButton.onclick = handletagitButtonClick;
+
+
+
+    // create theme 
+    var createthemeButton = document.getElementById('createtheme');
+    createthemeButton.onclick = handlecreatethemeButtonClick;
+
+    // query message 
+    var querymessageButton = document.getElementById('querymessage');
+    querymessageButton.onclick = querymessageButtonClick;
+
+
+    function querymessageButtonClick() {
+      var Message = Parse.Object.extend("Message");
+      var query = new Parse.Query(Message);
+      // query.equalTo("textcontent", "Missing you...");
+      query.notEqualTo("textcontent", "Good Morning...");
+      // query.skip(2);
+      // query.descending("createdAt");
+      query.find({
+        success: function(results) {
+          $( "div" ).text("Successfully retrieved " + results.length + " messages.");
+          // Do something with the returned Parse.Object values
+          for (var i = 0; i < results.length; i++) {
+            var object = results[i];
+            $( "p" ).append(object.id + ' - ' + object.createdAt + ' <br /> ');
+          }
+        },
+        error: function(error) {
+          alert("Error: " + error.code + " " + error.message);
+        }
+      });      
+    }
+
+    function handlecreatethemeButtonClick() {
+      var Theme = Parse.Object.extend("Theme");
+      var mytheme = new Theme();
+      mytheme.set("type", "sunny");
+      mytheme.set("bundleurl", "http://files.parse.com/b97cadbd-3892-4a73-8985-71217109ac9e/cb67a02c-c718-48ee-a0e0-0836b274984d-photo.jpg");
+
+      var Message = Parse.Object.extend("Message");
+      var mymessage = new Message();
+      mymessage.set("textcontent", "Good Morning...");
+      mymessage.set("imageurl", "http://files.parse.com/b97cadbd-3892-4a73-8985-71217109ac9e/cb67a02c-c718-48ee-a0e0-0836b274984d-photo.jpg");
+      mymessage.set("parent", mytheme);
+      mymessage.save(null, {
+        success: function(message) {
+          // Execute any logic that should take place after the object is saved.
+          $( "div" ).text( "New message created with objectId: " + message.id + " Theme objectId: " + message.get("parent").id);
+          // alert('New theme created with objectId: ' + message.id);
+        },
+        error: function(gameScore, error) {
+          // Execute any logic that should take place if the save fails.
+          // error is a Parse.Error with an error code and description.
+          alert('Failed to create new object, with error code: ' + error.description);
+        }
+      });
+    }
+
+
+
+    function handleretrieveobjectButtonClick() {
+      var GameScore = Parse.Object.extend("GameScore");
+      var query = new Parse.Query(GameScore);
+      query.get("9lgkHWXeL6", {
+        success: function(gameScore) {
+          $( "div" ).text( "GameScore.score" + gameScore.get("score") )
+          // The object was retrieved successfully.
+        },
+        error: function(object, error) {
+          alert("Error: " + error.code + " " + error.message);
+          // The object was not retrieved successfully.
+          // error is a Parse.Error with an error code and description.
+        }
+      });      
+    }
+
+
+
+    function handlecreateobjectButtonClick() {
+      var GameScore = Parse.Object.extend("GameScore");
+      var gameScore = new GameScore();
+       
+      var parseFile = new Parse.File("Avatar.jpg", { base64: "V29ya2luZyBhdCBQYXJzZSBpcyBncmVhdCE=" });
+
+      gameScore.set("score", 1337);
+      gameScore.set("playerName", "Sean Plott");
+      gameScore.set("playerAvatar", parseFile);
+      gameScore.set("cheatMode", false);
+       
+      gameScore.save(null, {
+        success: function(gameScore) {
+          // Execute any logic that should take place after the object is saved.
+          alert('New object created with objectId: ' + gameScore.id);
+        },
+        error: function(gameScore, error) {
+          // Execute any logic that should take place if the save fails.
+          // error is a Parse.Error with an error code and description.
+          alert('Failed to create new object, with error code: ' + error.description);
+        }
+      });
+    }
+
+
+
+    function handletagitButtonClick() {
+      var Content = Parse.Object.extend("JobApplication");
+      var query = new Parse.Query(Content);
+      var applicantName = $('#applicantName').val();
+      query.equalTo("applicantName", applicantName);
+      query.limit(1);
+      query.exists("applicantResumeFile");
+      query.find({
+        success: function(results) {
+          // If the query is successful, store each image URL in an array of image URL's
+          imageURLs = [];
+          for (var i = 0; i < results.length; i++) { 
+            var object = results[i];
+            imageURLs.push(object.get('applicantResumeFile'));
+          }
+          // If the imageURLs array has items in it, set the src of an IMG element to the first URL in the array
+          if(imageURLs.length > 0){
+            // $('#color').attr('src', imageURLs[0]);
+            $("<img />", { src: imageURLs[0]._url}).appendTo($('#empty').empty());
+          }
+        },
+        error: function(error) {
+          // If the query is unsuccessful, report any errors
+          alert("Error: " + error.code + " " + error.message);
+        }
+    });      
+    }
+
+  </script>
+</body>
+
+</html>
